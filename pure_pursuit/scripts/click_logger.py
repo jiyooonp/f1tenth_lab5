@@ -3,8 +3,17 @@
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PointStamped
+from visualization_msgs.msg import Marker, MarkerArray
 import csv
+import os
 
+
+def delete_file_if_exists(file_path):
+    if os.path.exists(file_path):
+        os.remove(file_path)
+        print(f"File '{file_path}' has been deleted.")
+    else:
+        print(f"File '{file_path}' does not exist.")
 
 class PointSaver(Node):
     def __init__(self):
@@ -15,6 +24,15 @@ class PointSaver(Node):
             self.clicked_point_callback,
             10)
         self.log_dir = '/sim_ws/src/f1tenth_lab5/logs/'
+        delete_file_if_exists(self.log_dir+'waypoints_clicked.csv')
+
+        # publish clicked points as a marker array
+        self.marker_array_pub = self.create_publisher(
+            MarkerArray,
+            '/clicked_history',
+            10)
+        self.marker_history = []
+
 
     def clicked_point_callback(self, msg):
         point = msg.point
@@ -22,6 +40,32 @@ class PointSaver(Node):
             writer = csv.writer(file)
             writer.writerow([point.x, point.y, 0.00000, 0.00000])
         self.get_logger().info('Point saved: {}, {}'.format(point.x, point.y))
+
+        # publish the clicked point
+        # Create a new marker
+        marker = Marker()
+        marker.header.frame_id = 'map'
+        marker.id = len(self.marker_history)  # Unique ID based on history size
+        marker.type = Marker.SPHERE
+        marker.action = Marker.ADD
+        marker.pose.position.x = point.x
+        marker.pose.position.y = point.y
+        marker.pose.position.z = 0.0
+        marker.scale.x = 0.2
+        marker.scale.y = 0.2
+        marker.scale.z = 0.2
+        marker.color.a = 0.3
+        marker.color.r = 0.2
+        marker.color.g = 0.0
+        marker.color.b = 0.3
+
+        # Add the marker to the history
+        self.marker_history.append(marker)
+
+        # Publish the entire history
+        marker_array = MarkerArray(markers=self.marker_history)
+
+        self.marker_array_pub.publish(marker_array)
 
 
 def main(args=None):
