@@ -53,10 +53,10 @@ class PurePursuit(Node):
 
         # load all the waypoints from the csv file
         self.waypoints = np.genfromtxt(
-            '/sim_ws/src/f1tenth_lab5/logs/waypoints.csv', delimiter=',')
+            '/sim_ws/src/f1tenth_lab5/logs/waypoints_clicked.csv', delimiter=',')
 
         # only take every 50th waypoint
-        self.waypoints = self.waypoints[::100]
+        # self.waypoints = self.waypoints[::100]
 
         self.goal_index = 0
         self.L = 1.0
